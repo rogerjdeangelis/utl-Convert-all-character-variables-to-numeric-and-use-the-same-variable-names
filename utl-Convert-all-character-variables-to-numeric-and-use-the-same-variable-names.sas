@@ -1,5 +1,12 @@
 Convert all character variables to numeric and use the same variable names
  
+   To solutions
+ 
+       a. Ted Clay's do_over and array macros
+ 
+       b. Barts do_over and array macros
+          Bartosz Jablonski yabwon@gmail.com
+ 
 Github
 https://tinyurl.com/sdw2eczx
 https://github.com/rogerjdeangelis/utl-Convert-all-character-variables-to-numeric-and-use-the-same-variable-names
@@ -42,6 +49,14 @@ run;quit;
 |_|
 ;
  
+*          _____        _
+  __ _    |_   _|__  __| |
+ / _` |     | |/ _ \/ _` |
+| (_| |_    | |  __/ (_| |
+ \__,_(_)   |_|\___|\__,_|
+ 
+;
+ 
 %array(chrs,values=%varlist(have));
  
 proc sql;
@@ -53,6 +68,57 @@ proc sql;
   from
     have
 ;quit;
+ 
+%arraydelete(chrs);
+ 
+*_        ____             _
+| |__    | __ )  __ _ _ __| |_
+| '_ \   |  _ \ / _` | '__| __|
+| |_) |  | |_) | (_| | |  | |_
+|_.__(_) |____/ \__,_|_|   \__|
+ 
+;
+ 
+filename packages "%sysfunc(pathname(work))";
+filename SPFinit url "https://raw.githubusercontent.com/yabwon/SAS_PACKAGES/main/SPF/SPFinit.sas";
+%include SPFinit; /* enable the framework */
+ 
+%installPackage(MacroArray BasePlus) /* install the packages */
+%loadPackageS(MacroArray, BasePlus)  /* load packages content into the SAS session */
+ 
+%put &=sysLoadedPackages.;
+ 
+data have; /* Example of actual data set */
+  input (a b c d e) ($);
+cards4;
+1 1 1 1 1
+;;;;
+run;
+proc contents data = have;
+run;
+ 
+/* %helpPackage(BasePlus, '%getVars()') */
+%getVars(have, varRange = _character_, mcArray = chrs)
+ 
+proc sql;
+  create table want as
+  select
+    /* %helpPackage(MacroArray, '%do_over()') */
+    %do_over(chrs
+      ,phrase  = %nrstr(input(%chrs(&_I_.), best.) as %chrs(&_I_.))
+      ,between = %str(,)
+    )
+  from
+    have
+;
+quit;
+proc contents data = want;
+run;
+ 
+%unloadPackage(BasePlus)
+%unloadPackage(MacroArray)
+ 
+%put &=sysLoadedPackages.;
  
 *            _               _
   ___  _   _| |_ _ __  _   _| |_
@@ -71,4 +137,5 @@ proc sql;
 3    C           Num       8
 4    D           Num       8
 5    E           Num       8
+
  
